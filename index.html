@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>readme-card-generator</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
+    <style>
+      @layer base {
+        html, body { margin: 0; padding: 0; }
+        body { overscroll-behavior: none; }
+        main > :first-child { margin-top: 0 !important; }
+        main > :last-child { margin-bottom: 0 !important; }
+      }
+      ::-webkit-scrollbar { display: none; }
+    </style>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed":"#bef456","surface-container-low":"#191d13","surface":"#11150b","on-secondary-container":"#b7b5b4","on-primary":"#243600","on-tertiary-fixed-variant":"#751e7e","inverse-on-surface":"#2e3226","surface-container":"#1d2116","surface-container-high":"#282b20","secondary":"#c8c6c5","on-primary-fixed-variant":"#364e00","on-primary-fixed":"#131f00","secondary-fixed-dim":"#c8c6c5","on-surface-variant":"#c3c9b1","surface-tint":"#a3d73c","surface-variant":"#33362b","on-error-container":"#ffdad6","on-background":"#e1e4d3","outline-variant":"#434937","tertiary-fixed":"#ffd6fb","surface-container-lowest":"#0c0f06","on-tertiary-container":"#7b2484","on-surface":"#e1e4d3","tertiary":"#ffc7fc","secondary-fixed":"#e5e2e1","on-secondary-fixed-variant":"#474746","on-tertiary-fixed":"#36003d","on-secondary":"#303030","tertiary-container":"#fc99ff","primary":"#b5ea4d","primary-container":"#9acd32","inverse-surface":"#e1e4d3","error":"#ffb4ab","on-primary-container":"#3a5400","on-tertiary":"#590062","outline":"#8d937d","tertiary-fixed-dim":"#fea9ff","on-error":"#690005","error-container":"#93000a","inverse-primary":"#496800","surface-dim":"#11150b","primary-fixed-dim":"#a3d73c","on-secondary-fixed":"#1b1b1c","background":"#11150b","secondary-container":"#474746","surface-container-highest":"#33362b","surface-bright":"#373b2f"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"base":"8px","container-padding":"20px","gutter":"16px","card-gap":"12px","section-margin":"32px"},"fontFamily":{"body-lg":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"label-sm":["Hanken Grotesk"],"display-lg":["Hanken Grotesk"],"headline-md-mobile":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"]},"fontSize":{"body-lg":["18px",{"lineHeight":"28px","fontWeight":"400"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-md-mobile":["20px",{"lineHeight":"28px","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}]}}}}
+    </script>
+  </head>
+  <body class="bg-background font-body-md text-on-surface antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
