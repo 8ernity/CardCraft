@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import CardPreview from './components/CardPreview';
 import ControlPanel from './components/ControlPanel';
 
@@ -33,16 +33,42 @@ function App() {
     imgVignetteFocus: 50,
     imgVignetteX: 50,
     imgVignetteY: 50,
-    imgOverlay: 90,
+    imgOverlay: 0,
     imgScale: 100,
+    imgOffsetX: 0,
+    imgOffsetY: 0,
     icon: 'deployed_code'
   });
 
   const [previewZoom, setPreviewZoom] = useState(1);
-  const [gridEnabled, setGridEnabled] = useState(true);
+  const [isGreyBg, setIsGreyBg] = useState(false);
+  const [cardSize, setCardSize] = useState({ width: 800, height: 400 });
   const [toast, setToast] = useState({ show: false, text: '' });
   const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, initialOffsetX: 0, initialOffsetY: 0 });
   const svgRef = useRef(null);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const el = entry.target;
+        // Use requestAnimationFrame to avoid "ResizeObserver loop limit exceeded" errors in React
+        window.requestAnimationFrame(() => {
+          setCardSize(prev => {
+            if (prev.width !== el.clientWidth || prev.height !== el.clientHeight) {
+              return { width: el.clientWidth, height: el.clientHeight };
+            }
+            return prev;
+          });
+        });
+      }
+    });
+    observer.observe(wrapperRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const showToast = (msg) => {
     setToast({ show: true, text: msg });
@@ -67,9 +93,9 @@ function App() {
 
   const handleCopyMarkdown = () => {
     const filename = `${config.repoName.split('/').pop() || 'card'}.svg`;
-    const markdown = `[![Card](./${filename})](https://github.com/${config.repoName})`;
-    navigator.clipboard.writeText(markdown);
-    showToast('Markdown badge code copied to clipboard!');
+    const htmlSnippet = `<a href="https://github.com/${config.repoName}">\n  <img src="./[PATH_TO_SVG]/${filename}" width="49%" />\n</a>`;
+    navigator.clipboard.writeText(htmlSnippet);
+    showToast('HTML code copied to clipboard!');
   };
 
   return (
@@ -78,8 +104,8 @@ function App() {
         <div className="h-16 w-full px-container-padding flex items-center justify-between">
           <div className="flex items-center gap-gutter">
             <div className="flex items-center gap-base">
-              <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
-                <span className="material-symbols-outlined text-on-primary-container text-[20px]">badge</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shadow-sm">
+                <img src="/CardCraft.png" alt="CardCraft Logo" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center gap-base">
                 <span className="font-headline-md text-headline-md-mobile text-on-surface font-bold tracking-tight">CardCraft</span>
@@ -108,7 +134,28 @@ function App() {
         </div>
       </header>
 
-      <main className="w-full pt-16 bg-background h-screen overflow-hidden">
+      <main 
+        className="w-full pt-16 bg-background h-screen overflow-hidden"
+        onMouseMove={(e) => {
+          if (isPanning && config.imageSrc) {
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            const deltaXPercent = (dx * 200) / (cardSize.width * previewZoom);
+            const deltaYPercent = (dy * 200) / (cardSize.height * previewZoom);
+            
+            const scale = config.imgScale / 100;
+            const maxOffset = 50 * Math.abs(scale - 1);
+            
+            setConfig(prev => ({
+              ...prev,
+              imgOffsetX: Math.max(-maxOffset, Math.min(maxOffset, dragStart.initialOffsetX + deltaXPercent)),
+              imgOffsetY: Math.max(-maxOffset, Math.min(maxOffset, dragStart.initialOffsetY + deltaYPercent))
+            }));
+          }
+        }}
+        onMouseUp={() => setIsPanning(false)}
+        onMouseLeave={() => setIsPanning(false)}
+      >
         <div className="flex flex-col w-full h-full">
           <div className="flex flex-col xl:flex-row w-full h-full">
             
@@ -123,7 +170,7 @@ function App() {
             />
 
             {/* Right Side: Live Preview Workspace */}
-            <section className="flex-1 flex flex-col relative bg-black overflow-hidden">
+            <section className={`flex-1 flex flex-col relative overflow-hidden transition-colors duration-300 ${isGreyBg ? 'bg-[#2d2d30]' : 'bg-black'}`}>
               <div className="h-14 px-container-padding flex items-center justify-between bg-surface/60 backdrop-blur-md z-20">
                 <div className="flex items-center gap-gutter">
                   <div className="flex items-center gap-base">
@@ -133,16 +180,25 @@ function App() {
                   <span className="text-outline-variant font-label-sm text-label-sm">|</span>
                   <div className="flex items-center gap-base">
                     <span className="material-symbols-outlined text-[16px] text-primary">aspect_ratio</span>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">SVG Vector Standard • 800 × 400 px</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant">Export Size • {cardSize.width} × {cardSize.height} px</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-base">
+                  {(cardSize.width !== 800 || cardSize.height !== 400) && (
+                    <button 
+                      onClick={() => setCardSize({ width: 800, height: 400 })}
+                      className="flex items-center gap-1 px-base py-1 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-all text-label-sm font-label-sm"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">restore</span>
+                      <span>Reset Size</span>
+                    </button>
+                  )}
                   <button 
-                    onClick={() => setGridEnabled(!gridEnabled)}
+                    onClick={() => setIsGreyBg(!isGreyBg)}
                     className="flex items-center gap-base px-base py-1 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-label-sm font-label-sm"
                   >
-                    <span className="material-symbols-outlined text-[16px]">grid_4x4</span>
-                    <span className="hidden sm:inline">Backdrop Grid</span>
+                    <span className="material-symbols-outlined text-[16px]">contrast</span>
+                    <span className="hidden sm:inline">Workspace Bg</span>
                   </button>
                   <div className="px-base py-1 rounded-lg bg-surface-container text-primary font-label-sm text-label-sm flex items-center gap-base">
                     <span className="material-symbols-outlined text-[14px]">bolt</span>
@@ -159,15 +215,39 @@ function App() {
                 }}
                 onMouseLeave={() => setMousePos({ x: -1000, y: -1000 })}
               >
-                {gridEnabled && (
-                  <>
-                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
-                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1.5px, transparent 0)', backgroundSize: '16px 16px', maskImage: `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black, transparent)`, WebkitMaskImage: `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black, transparent)` }}></div>
-                  </>
-                )}
+                <>
+                  <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '16px 16px', opacity: isGreyBg ? 0.4 : 1 }}></div>
+                  <div className="absolute inset-0 pointer-events-none transition-opacity duration-300" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1.5px, transparent 0)', backgroundSize: '16px 16px', maskImage: `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black, transparent)`, WebkitMaskImage: `radial-gradient(circle 120px at ${mousePos.x}px ${mousePos.y}px, black, transparent)`, opacity: isGreyBg ? 0.4 : 1 }}></div>
+                </>
                 
-                <div className="transition-transform duration-200 ease-out origin-center shadow-2xl relative z-10" style={{ transform: `scale(${previewZoom})` }}>
-                  <CardPreview config={config} svgRef={svgRef} />
+                <div 
+                  ref={wrapperRef}
+                  className={`transition-transform duration-200 ease-out origin-center shadow-2xl relative z-10 group ${config.imageSrc ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : ''}`} 
+                  style={{ 
+                    transform: `scale(${previewZoom})`,
+                    resize: 'both',
+                    overflow: 'hidden',
+                    width: cardSize.width,
+                    height: cardSize.height,
+                    minWidth: 200,
+                    minHeight: 100,
+                    maxWidth: 1600,
+                    maxHeight: 1600
+                  }}
+                  onMouseDown={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const isResizeHandle = (e.clientX > rect.right - 20) && (e.clientY > rect.bottom - 20);
+                    if (config.imageSrc && !isResizeHandle) {
+                      e.preventDefault();
+                      setIsPanning(true);
+                      setDragStart({ x: e.clientX, y: e.clientY, initialOffsetX: config.imgOffsetX, initialOffsetY: config.imgOffsetY });
+                    }
+                  }}
+                >
+                  <CardPreview config={config} svgRef={svgRef} width={cardSize.width} height={cardSize.height} />
+                  <div className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity bg-primary/80 backdrop-blur rounded-tl-lg pointer-events-none flex items-center justify-center shadow-lg">
+                    <span className="material-symbols-outlined text-[14px] text-on-primary">drag_indicator</span>
+                  </div>
                 </div>
               </div>
 

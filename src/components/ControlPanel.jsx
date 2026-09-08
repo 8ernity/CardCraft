@@ -5,7 +5,18 @@ const ControlPanel = ({ config, setConfig, palettes, onDownload, onCopy, toast }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setConfig(prev => ({ ...prev, [name]: value }));
+    if (name === 'imgScale') {
+      const scale = value / 100;
+      const maxOffset = 50 * Math.abs(scale - 1);
+      setConfig(prev => ({ 
+        ...prev, 
+        imgScale: value,
+        imgOffsetX: Math.max(-maxOffset, Math.min(maxOffset, prev.imgOffsetX)),
+        imgOffsetY: Math.max(-maxOffset, Math.min(maxOffset, prev.imgOffsetY))
+      }));
+    } else {
+      setConfig(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handlePaletteSelect = (palette) => {
@@ -23,6 +34,16 @@ const ControlPanel = ({ config, setConfig, palettes, onDownload, onCopy, toast }
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.type === 'image/gif') {
+        // Bypass canvas processing for GIFs to preserve animation
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setConfig(prev => ({ ...prev, imageSrc: event.target.result }));
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
@@ -53,7 +74,7 @@ const ControlPanel = ({ config, setConfig, palettes, onDownload, onCopy, toast }
   };
 
   return (
-    <aside className="w-full xl:w-[480px] bg-surface flex flex-col shadow-2xl z-30 border-r border-surface-container-highest">
+    <aside className="w-full xl:w-[480px] bg-surface-container-lowest flex flex-col shadow-2xl z-30 border-r border-surface-container-highest">
       <div className="p-base bg-surface-container-low flex items-center gap-base">
         <button 
           onClick={() => setActiveTab('general')}

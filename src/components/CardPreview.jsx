@@ -1,11 +1,14 @@
 import React from 'react';
 
-const CardPreview = ({ config, svgRef }) => {
+const CardPreview = ({ config, svgRef, width = 800, height = 400 }) => {
   const { 
     repoName, description, language, languageColor, stars, 
     bgColor, logoColor, titleColor, descColor, starColor, imageSrc,
-    imgOpacity, imgBrightness, imgContrast, imgSaturation, imgHue, imgSharpness, imgVignette, imgVignetteFocus = 50, imgVignetteX = 50, imgVignetteY = 50, imgOverlay = 90, imgScale = 100
+    imgOpacity, imgBrightness, imgContrast, imgSaturation, imgHue, imgSharpness, imgVignette, imgVignetteFocus = 50, imgVignetteX = 50, imgVignetteY = 50, imgOverlay = 90, imgScale = 100, imgOffsetX = 0, imgOffsetY = 0
   } = config;
+
+  const innerW = width / 2;
+  const innerH = height / 2;
 
   // Filter calculations
   const c = imgContrast / 100;
@@ -34,20 +37,21 @@ const CardPreview = ({ config, svgRef }) => {
     return finalLines.slice(0, 4);
   };
 
-  const descriptionLines = wrapText(description, 36);
+  const maxDescChars = Math.max(20, Math.floor(innerW / 11));
+  const descriptionLines = wrapText(description, maxDescChars);
 
   return (
     <svg 
       ref={svgRef}
-      width="800" 
-      height="400" 
-      viewBox="0 0 400 200" 
+      width={width} 
+      height={height} 
+      viewBox={`0 0 ${innerW} ${innerH}`}
       xmlns="http://www.w3.org/2000/svg"
       style={{ fontFamily: 'Arial, sans-serif', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
     >
       <defs>
         <clipPath id="card-clip">
-          <rect width="400" height="200" rx="8" />
+          <rect width={innerW} height={innerH} rx="8" />
         </clipPath>
         
         <linearGradient id="overlay-grad" x1="0" y1="0" x2="1" y2="0">
@@ -78,17 +82,17 @@ const CardPreview = ({ config, svgRef }) => {
       </defs>
 
       {/* Background Color */}
-      <rect width="400" height="200" fill={bgColor} rx="8" />
+      <rect width={innerW} height={innerH} fill={bgColor} rx="8" />
 
       {/* Full Background Image */}
       {imageSrc && (
         <g clipPath="url(#card-clip)">
           <image 
             href={imageSrc} 
-            x={200 - 200 * (imgScale / 100)} 
-            y={100 - 100 * (imgScale / 100)} 
-            width={400 * (imgScale / 100)} 
-            height={200 * (imgScale / 100)} 
+            x={innerW/2 - innerW/2 * (imgScale / 100) + (imgOffsetX / 100) * innerW} 
+            y={innerH/2 - innerH/2 * (imgScale / 100) + (imgOffsetY / 100) * innerH} 
+            width={innerW * (imgScale / 100)} 
+            height={innerH * (imgScale / 100)} 
             preserveAspectRatio="xMidYMid slice"
             opacity={imgOpacity / 100}
             filter={hasFilter ? 'url(#img-adjust)' : undefined}
@@ -96,12 +100,12 @@ const CardPreview = ({ config, svgRef }) => {
           
           {/* Vignette Layer */}
           {imgVignette > 0 && (
-            <rect width="400" height="200" fill="url(#vignette-grad)" />
+            <rect width={innerW} height={innerH} fill="url(#vignette-grad)" />
           )}
 
           {/* Overlay for text readability */}
           {imgOverlay > 0 && (
-            <rect width="400" height="200" fill="url(#overlay-grad)" />
+            <rect width={innerW} height={innerH} fill="url(#overlay-grad)" />
           )}
         </g>
       )}
@@ -126,24 +130,24 @@ const CardPreview = ({ config, svgRef }) => {
       <text x="20" y="68" fontFamily="Arial, sans-serif" fontSize="13" fill={descColor}>
         {descriptionLines.map((line, i) => (
           <tspan key={i} x="20" dy={i === 0 ? 0 : 18}>
-            {line}{i === 3 && description.length > 140 ? '...' : ''}
+            {line}{i === 3 && description.length > maxDescChars * 4 ? '...' : ''}
           </tspan>
         ))}
       </text>
 
       {/* Language */}
-      <circle cx="26" cy="170" r="6" fill={languageColor} />
-      <text x="38" y="174" fontFamily="Arial, sans-serif" fontSize="12" fill={starColor}>
+      <circle cx="26" cy={innerH - 30} r="6" fill={languageColor} />
+      <text x="38" y={innerH - 26} fontFamily="Arial, sans-serif" fontSize="12" fill={starColor}>
         {language}
       </text>
 
       {/* Stars */}
       {Number(stars) > 0 && (
         <>
-          <svg x="100" y="162" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg x="100" y={innerH - 38} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25zm0 2.445L6.615 5.5a.75.75 0 01-.564.41l-3.097.45 2.24 2.184a.75.75 0 01.216.664l-.528 3.084 2.769-1.456a.75.75 0 01.698 0l2.77 1.456-.53-3.084a.75.75 0 01.216-.664l2.24-2.183-3.096-.45a.75.75 0 01-.564-.41L8 2.694v.001z" fill={starColor}/>
           </svg>
-          <text x="120" y="174" fontFamily="Arial, sans-serif" fontSize="12" fill={starColor}>
+          <text x="120" y={innerH - 26} fontFamily="Arial, sans-serif" fontSize="12" fill={starColor}>
             {stars}
           </text>
         </>
