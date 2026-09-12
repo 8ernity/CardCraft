@@ -140,6 +140,18 @@ const ControlPanel = ({ config, setConfig, palettes, onDownload, onCopy, toast }
                 <span className="font-label-sm text-label-sm text-on-surface-variant">{config.description.length} chars</span>
               </div>
               <textarea name="description" value={config.description} onChange={handleChange} className="w-full px-3 py-2 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-highest focus:outline-none focus:ring-1 focus:ring-primary transition-all resize-none" rows="3"></textarea>
+              
+              <div className="flex items-center justify-between mt-2">
+                <span className="font-label-sm text-label-sm font-semibold text-on-surface">Text Wrap Area</span>
+                <span className="font-label-sm text-label-sm text-primary font-mono font-bold">{config.textWrapWidth}%</span>
+              </div>
+              <input name="textWrapWidth" min="50" max="200" value={config.textWrapWidth} onChange={handleChange} className="w-full accent-primary bg-surface-container cursor-pointer" type="range" />
+              
+              <div className="flex items-center justify-between mt-2">
+                <span className="font-label-sm text-label-sm font-semibold text-on-surface">Text Drop Shadow</span>
+                <span className="font-label-sm text-label-sm text-primary font-mono font-bold">{config.textShadow}%</span>
+              </div>
+              <input name="textShadow" min="0" max="100" value={config.textShadow} onChange={handleChange} className="w-full accent-primary bg-surface-container cursor-pointer" type="range" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">

@@ -37,6 +37,8 @@ function App() {
     imgScale: 100,
     imgOffsetX: 0,
     imgOffsetY: 0,
+    textWrapWidth: 100,
+    textShadow: 50,
     icon: 'deployed_code'
   });
 
